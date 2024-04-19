@@ -6,19 +6,37 @@ const GenerateResponse = require('../../utils/response_creator');
 
 // HTTP get method to get list of users, this function would get invoked at /users/ API call 
 router.get('/', async (req, res) => {
-    const users = await getUsers();
-    res.json(new GenerateResponse(true, undefined, users));
+
+    try {
+        console.log('in get /');
+        const users = await getUsers();
+        console.log('users are: ', users.length);
+        res.json(users);
+    }
+    catch {
+        (err) => {
+            console.log('err occured : ', err);
+        }
+    }
+
 });
 
 // HTTP post method to add a new user, this function would get invoked at /users/ API call
 router.post('/', async (req, res) => {
-    const userObj = req.body;
 
     try {
-        const usr = await User.create(req.body);
-        // Return all users as response
-        const users = await getUsers();
-        res.json(new GenerateResponse(true, undefined, users));
+        console.log('in post /');
+        // if user already exist        
+        if (await User.findOne({ Username: req.body.Username })) {
+            res.json({ message: "User already exists" })
+        }
+
+        else {
+            const usr = await User.create(req.body);
+            // Return all users as response
+            const users = await getUsers();
+            res.json(new GenerateResponse(true, undefined, users));
+        }
     } catch (error) {
         if (error instanceof Error) {
             res.json(new GenerateResponse(false, error.message));
@@ -27,15 +45,28 @@ router.post('/', async (req, res) => {
         }
     }
 });
+
 
 // HTTP put method to update an existing user, this function would get invoked at /users/ API call
-router.put('/', async (req, res) => {
-    const userObj = req.body;
+router.put('/:Username', async (req, res) => {
+    console.log('in put /username');
+    const { Username } = req.params
+    const newUserObj = req.body
+    console.log("username is: ", Username);
     try {
-        const upResult = await User.findOneAndUpdate({ _id: userObj._id }, { age: userObj.age }, { returnDocument: 'after' });
-        // Return all users as response
-        const users = await getUsers();
-        res.send(new GenerateResponse(true,undefined,users));
+
+        if (!(await User.findOne({ Username: Username }))) {
+            res.json({ message: "User does not exist" })
+        }
+        else {
+            console.log('about to change');
+            // console.log('id on put : ', JSON.stringify(req.params));
+            await User.findOneAndUpdate({ Username: Username }, newUserObj, { returnDocument: 'after' });
+            // Return all users as response
+            const users = await getUsers();
+            console.log('users after update: ', users);
+            res.send(new GenerateResponse(true, undefined, users));
+        }
     } catch (error) {
         if (error instanceof Error) {
             res.json(new GenerateResponse(false, error.message));
@@ -45,14 +76,19 @@ router.put('/', async (req, res) => {
     }
 });
 
+
 // HTTP delete method to delete an existing user, this function would get invoked at /users/ API call
-router.delete('/:id', async (req, res) => {
+router.delete('/:Username', async (req, res) => {
+
+    console.log('in delete /username');
+    const { Username } = req.params
+    console.log("username is: ", Username);
     try {
-        const delResult = await User.deleteOne({ _id: req.params.id });
-        if(delResult.hasOwnProperty("deletedCount") && delResult.deletedCount === 1){
+        const delResult = await User.deleteOne({ Username: Username });
+        if (delResult.hasOwnProperty("deletedCount") && delResult.deletedCount === 1) {
             // Return remaining users as response
             const users = await getUsers();
-            res.json(new GenerateResponse(true, undefined, users));   
+            res.json(new GenerateResponse(true, undefined, users));
         } else {
             res.json(new GenerateResponse(false, "Unable to delete user at the moment."));
         }
@@ -65,7 +101,7 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-async function getUsers(){
+async function getUsers() {
     const users = await User.find({}).lean();
     return users instanceof Array ? users : [];
 }

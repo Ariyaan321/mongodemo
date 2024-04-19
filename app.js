@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
-const mwLogger = require('./middlewares/logger');
+const cors = require('cors');
+// const mwLogger = require('./middlewares/logger');
 const mongoose = require('mongoose');
 
 const productRouter = require('./routes/products/routes');
@@ -12,10 +13,13 @@ mongoose.connection.on('connected', () => console.log('Database connected!'));
 mongoose.connection.on('disconnected', () => console.log('Database disconnected!'));
 mongoose.connection.on('error', (err) => console.log(`Database error ${err}`));
 
+app.use(cors())
+
 app.use(express.json());
 
+
 // Register middleware with the app instance
-app.use(mwLogger);
+// app.use(mwLogger);
 
 // Route registration for all /users routes
 app.use('/users', userRouter);
@@ -27,9 +31,13 @@ app.use('/products', productRouter);
 // app.use('/orders', orderRoutes);
 
 // root route endpoint
-app.get('/',(req,res) => {
+app.get('/', (req, res) => {
     res.send("Root endpoint!");
 });
+
+app.get('/userData', (req, res) => {
+    res.send()
+})
 
 app.listen(process.env.PORT, () => {
     console.log(`Example app listening on port ${process.env.PORT}`);

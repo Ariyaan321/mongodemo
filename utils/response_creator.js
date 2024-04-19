@@ -1,4 +1,4 @@
-function GenerateResponse(success, message, data){
+function GenerateResponse(success, message, data) {
     this.success = success;
     this.message = message;
     this.data = data;

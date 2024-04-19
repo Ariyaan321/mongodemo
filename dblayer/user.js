@@ -3,8 +3,18 @@ const { Schema } = mongoose;
 
 const userSchema = new Schema(
     {
-        name:String,
-        age:Number
+        Username: {
+            type: String,
+            required: true
+        },
+        Email: {
+            type: String,
+            required: true
+        },
+        Phone: {
+            type: Number,
+            required: true
+        }
     });
 
 const User = mongoose.model('User', userSchema);
